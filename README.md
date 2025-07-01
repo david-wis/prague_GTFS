@@ -1,3 +1,8 @@
+# Install gtfs via postgres
+``` sh
+npm install -g gtfs-via-postgres
+```
+
 # Import data
 ```sh
 export PGUSER=postgres
