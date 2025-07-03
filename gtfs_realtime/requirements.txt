@@ -1,2 +1,9 @@
 gtfs-realtime-bindings==1.0.0
 protobuf==4.23.0
+pandas
+duckdb
+plotly
+folium
+pyarrow
+psycopg
+psycopg_binary
