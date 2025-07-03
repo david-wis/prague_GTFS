@@ -4,3 +4,4 @@ PID_GTFS/discarded
 gtfs_realtime/.venv
 gtfs_realtime/output
 gtfs_realtime/*.parquet
+gtfs_realtime/*.html
