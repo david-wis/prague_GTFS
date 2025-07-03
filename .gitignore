@@ -1,3 +1,6 @@
 data
 PID_GTFS/*.txt
 PID_GTFS/discarded
+gtfs_realtime/.venv
+gtfs_realtime/output
+gtfs_realtime/*.parquet
