@@ -34,10 +34,11 @@ def create_vehicle_position_table(cur):
         route_id TEXT,
         latitude FLOAT8,
         longitude FLOAT8,
+        bearing FLOAT8,
         current_stop_sequence INTEGER,
         start_date TEXT,
         start_time TEXT,
-        timestamp BIGINT
+        timestamp TIMESTAMP WITH TIME ZONE
     );
     """
     cur.execute(create_table_query)
@@ -49,6 +50,7 @@ parquet_file = "modified-vehicle_positions_20250630_224819.parquet"
 def load_parquet_file(parquet_file):
     try:
         df = pd.read_parquet(parquet_file)
+        df.to_csv("vehicle_positions.csv", index=False)
         return df
     except Exception as e:
         print(f"Error loading Parquet file: {e}")
@@ -79,8 +81,8 @@ def insert_data_to_postgres(df, cur, conn):
     """
     insert_query = """
     INSERT INTO vehiclePosition
-    (vehicle_id, trip_id, route_id, latitude, longitude, current_stop_sequence, start_date, start_time, timestamp)
-    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);
+    (vehicle_id, trip_id, route_id, latitude, longitude, bearing, current_stop_sequence, start_date, start_time, timestamp)
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
     """
     # Use .where(pd.notnull()) to ensure None for SQL NULL
     rows = [
@@ -90,6 +92,7 @@ def insert_data_to_postgres(df, cur, conn):
             row["route_id"],
             row["latitude"],
             row["longitude"],
+            row["bearing"],
             (
                 int(row["current_stop_sequence"])
                 if pd.notnull(row["current_stop_sequence"])
@@ -119,6 +122,10 @@ if __name__ == "__main__":
         print(f"Loaded {len(vehicle_positions_df)} rows from the Parquet file.")
         print("Cleaning current_stop_sequence values...")
         vehicle_positions_df = clean_current_stop_sequence(vehicle_positions_df)
+        print("Converting timestamp values to datetime...")
+        vehicle_positions_df["timestamp"] = pd.to_datetime(
+            vehicle_positions_df["timestamp"], unit="s", utc=True
+        )
         print("Inserting data into PostgreSQL...")
         insert_data_to_postgres(vehicle_positions_df, cur, conn)
         print("Data insertion complete.")

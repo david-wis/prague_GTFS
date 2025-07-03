@@ -1,3 +1,4 @@
+.DS_Store
 data
 PID_GTFS/*.txt
 PID_GTFS/discarded
