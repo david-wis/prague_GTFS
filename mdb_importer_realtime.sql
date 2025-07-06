@@ -1,4 +1,4 @@
-CREATE EXTENSION MOBILITYDB;
+CREATE EXTENSION IF NOT EXISTS MOBILITYDB;
 DROP TABLE IF EXISTS positions CASCADE;
 
 CREATE TABLE IF NOT EXISTS positions (
@@ -54,7 +54,8 @@ DO $$ BEGIN RAISE NOTICE '...Altering positions'; END; $$;
 
 ALTER TABLE positions ADD COLUMN point geometry;
 UPDATE positions
-SET point = ST_SetSRID(ST_Point(longitude, latitude, 4326),5514);
+SET point = ST_Transform(ST_SetSRID(ST_Point(longitude, latitude), 4326), 5514);
+
 
 DO $$ BEGIN RAISE NOTICE '...Creating trip_mdb'; END; $$;
 
