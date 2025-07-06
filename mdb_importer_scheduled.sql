@@ -113,6 +113,14 @@ BEGIN
 END;
 $$;
 
+DELETE FROM trip_segs
+WHERE trip_id IN (
+  SELECT trip_id
+  FROM trip_segs
+  WHERE seg_geom IS NULL
+);
+-- 5963 trips (7.8% aprox)
+
 DO $$
 BEGIN
   RAISE NOTICE '...Updating trip_segs 2';
