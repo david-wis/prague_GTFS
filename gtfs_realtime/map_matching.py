@@ -38,7 +38,7 @@ def map_match_trip(points, failed_log, vehicle_id=None, trip_id=None):
         # "filters": {
         #     "action": "include",
         #     "attributes": ["matched_point", "edge_shape"]
-        # }
+        # }    
     }
 
     try:
@@ -78,6 +78,56 @@ def run_map_matching(gdf):
 
     return gpd.GeoDataFrame(rows, crs="EPSG:4326"), failed_log
 
+def projection(gdf, matched_gdf):
+    gdf = gdf.dropna(subset=['vehicle_id', 'trip_id'])
+    matched_gdf = matched_gdf.dropna(subset=['vehicle_id', 'trip_id'])
+
+    merged = gdf.merge(
+        matched_gdf[['vehicle_id', 'trip_id', 'geometry']], 
+        on=['vehicle_id', 'trip_id'], 
+        suffixes=('', '_line')
+    )
+
+    def linelocate(row):
+        try:
+            pos = row['geometry_line'].project(row['geometry'], normalized=True)
+            return pos
+        except Exception:
+            return None
+
+    def snap_point(row):
+        try:
+            if pd.isna(row['line_position']):
+                return None, None
+            snapped_point = row['geometry_line'].interpolate(row['line_position'], normalized=True)
+            return snapped_point.y, snapped_point.x  # y=lat, x=lon
+        except Exception:
+            return None, None
+
+    merged['line_position'] = merged.apply(linelocate, axis=1)
+    merged[['snapped_latitude', 'snapped_longitude']] = merged.apply(
+        lambda row: pd.Series(snap_point(row)), axis=1
+    )
+
+    cols = [
+        "vehicle_id",
+        "trip_id",
+        "route_id",
+        "latitude",
+        "longitude",
+        "snapped_latitude",
+        "snapped_longitude",
+        "bearing",
+        "current_stop_sequence",
+        "start_date", 
+        "start_time", 
+        "timestamp",
+        "line_position"
+    ]
+
+    merged[cols].to_csv("vehicle_positions_with_linelocate.csv", index=False)
+
+
 def save_failed_as_geojson(failed_log, filename="map_matching_errors.geojson"):
     rows = []
     for entry in failed_log:
@@ -116,3 +166,5 @@ if __name__ == "__main__":
         failed_df = pd.DataFrame(failed_log)
         save_failed_as_geojson(failed_log)
         print(f"Failed map matching for {len(failed_log)} trips. Details saved to map_matching_errors.geojson")
+
+    # projection(gdf, matched_gdf)
