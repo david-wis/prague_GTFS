@@ -10,12 +10,14 @@ VALHALLA_URL = "http://localhost:8002/trace_route"
 
 def prepare_trips(gdf):
     gdf = gdf.sort_values(['vehicle_id', 'trip_id', 'timestamp'])
+    gdf['epoch_seconds'] = gdf['timestamp'].astype('int64') // 10**9
     trip_points = defaultdict(list)
     for _, row in gdf.iterrows():
         key = (row['vehicle_id'], row['trip_id'])
         point = {
             "lat": row['latitude'],
-            "lon": row['longitude']
+            "lon": row['longitude'],
+            "epoch_seconds": row['epoch_seconds']
         }
         if pd.notna(row['bearing']):
             point["heading"] = int(row['bearing'])
@@ -33,10 +35,10 @@ def map_match_trip(points, failed_log, vehicle_id=None, trip_id=None):
         "shape_match": "map_snap",
         "use_timestamps": True,
         "format": "orsm",
-        "filters": {
-            "action": "include",
-            "attributes": ["matched_point", "edge_shape"]
-        }
+        # "filters": {
+        #     "action": "include",
+        #     "attributes": ["matched_point", "edge_shape"]
+        # }
     }
 
     try:
@@ -92,7 +94,6 @@ def save_failed_as_geojson(failed_log, filename="map_matching_errors.geojson"):
     if rows:
         failed_gdf = gpd.GeoDataFrame(rows, crs="EPSG:4326")
         failed_gdf.to_file(filename, driver="GeoJSON")
-        print(f"{len(rows)} puntos de error guardados en {filename}")
     else:
         print("No failed points to save.")
 
@@ -103,6 +104,10 @@ if __name__ == "__main__":
     gdf = gpd.GeoDataFrame(df, geometry=geometry)
 
     matched_gdf, failed_log = run_map_matching(gdf)
+
+    # count distinct trips
+    distinct_trips_len = matched_gdf['trip_id'].nunique()
+    print(f"Number of distinct trips after map matching: {distinct_trips_len}")
 
     matched_gdf.to_file("map_matched_trips.geojson", driver="GeoJSON")
     print("Map matching completed.")
