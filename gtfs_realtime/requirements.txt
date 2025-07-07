@@ -7,3 +7,6 @@ folium
 pyarrow
 psycopg
 psycopg_binary
+geopandas
+polyline
+tqdm

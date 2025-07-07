@@ -25,7 +25,8 @@ COPY positions(
   startdate,
   starttime,
   timestamp
-) FROM '/tmp/vehicle_positions.csv' DELIMITER ',' CSV HEADER;
+-- ) FROM '/tmp/vehicle_positions.csv' DELIMITER ',' CSV HEADER;
+) FROM  '/var/lib/postgresql/vehicle_positions.csv' DELIMITER ',' CSV HEADER;
 
 DELETE FROM positions a
 USING positions b
@@ -78,7 +79,7 @@ INSERT INTO trips_mdbrt(
     startdate,
     starttime,
     trip)
-SELECT trip_id, vehicle_id, startdate, starttime, tgeompointseq(array_agg(tgeompoint(point, (to_timestamp(timestamp) at time zone 'Europe/Prague')) ORDER BY timestamp))
+SELECT trip_id, vehicle_id, startdate, starttime, tgeompointseq(array_agg(tgeompoint(point, to_timestamp(timestamp)) ORDER BY timestamp))
 FROM positions
 WHERE startdate IS NOT NULL
 GROUP BY trip_id, vehicle_id, starttime, startdate;
