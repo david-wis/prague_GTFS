@@ -14,13 +14,20 @@ def prepare_trips(gdf):
     trip_points = defaultdict(list)
     for _, row in gdf.iterrows():
         key = (row['vehicle_id'], row['trip_id'])
+        prev = trip_points[key][-1] if trip_points[key] else None
+        if row['timestamp'] == prev['time'] if prev else None:
+            if (row['latitude'] == prev['lat'] and row['longitude'] == prev['lon']) if prev else False:
+                continue  # Skip duplicate points
+            else:
+                print("Inconsistency detected")
+
         point = {
             "lat": row['latitude'],
             "lon": row['longitude'],
-            "epoch_seconds": row['epoch_seconds']
+            "time": row['timestamp']
+            # "epoch_seconds": row['epoch_seconds']
+            # "time": row['epoch_seconds']
         }
-        if pd.notna(row['bearing']):
-            point["heading"] = int(row['bearing'])
         trip_points[key].append(point)
     return trip_points
 
@@ -29,12 +36,15 @@ def map_match_trip(points, failed_log, vehicle_id=None, trip_id=None):
         return None
 
     payload = {
-        "search_radius": 10,
+        # "search_radius": 100,
         "shape": points,
         "costing": "auto",
         "shape_match": "map_snap",
         "use_timestamps": True,
         "format": "orsm",
+        "trace_options": {
+            "search_radius": 100,
+        }
         # "filters": {
         #     "action": "include",
         #     "attributes": ["matched_point", "edge_shape"]
