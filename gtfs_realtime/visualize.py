@@ -5,8 +5,8 @@ import webbrowser
 
 
 # Path to the Parquet file
-parquet_file = "vehicle_positions_20250630_224819.parquet"
-modified_parquet_file = "modified-vehicle_positions_20250630_224819.parquet"
+parquet_file = "vehicle_positions_20250708_175459.parquet"
+modified_parquet_file = "modified-vehicle_positions_20250708_175459.parquet"
 
 
 # Function to load the parquet file and query the trajectory of Tram 1
@@ -28,9 +28,9 @@ def query_tram1_trajectory(parquet_file):
     query = f"""
     SELECT * 
     FROM parquet_scan('{parquet_file}')
-    WHERE trip_id LIKE '1%'  -- Adjust based on actual trip_id or route_id for Tram 1
     ORDER BY timestamp
     """
+    # WHERE trip_id LIKE '1%'  -- Adjust based on actual trip_id or route_id for Tram 1
 
     # Execute the query and return the result as a pandas DataFrame
     df = con.execute(query).fetchdf()

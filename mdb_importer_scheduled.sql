@@ -196,7 +196,8 @@ BEGIN
          date, point_geom, date + point_arrival_time AS t
   FROM trip_points t
   JOIN service_dates s ON t.service_id = s.service_id
-  WHERE date BETWEEN '2025-06-29' AND '2025-07-01';
+  -- WHERE date BETWEEN '2025-06-29' AND '2025-07-01'; -- For schedule analysis
+  WHERE date = '2025-07-08'; -- For real time analysis
 END;
 $$;
 

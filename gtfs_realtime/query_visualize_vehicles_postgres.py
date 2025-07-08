@@ -44,7 +44,7 @@ def create_vehicle_position_table(cur):
     cur.execute(create_table_query)
 
 
-parquet_file = "modified-vehicle_positions_20250630_224819.parquet"
+parquet_file = "modified-vehicle_positions_20250708_175459.parquet"
 
 
 def load_parquet_file(parquet_file):

@@ -1,6 +1,6 @@
 CREATE EXTENSION IF NOT EXISTS MOBILITYDB;
-DROP TABLE IF EXISTS positions CASCADE;
 
+DROP TABLE IF EXISTS positions CASCADE;
 CREATE TABLE IF NOT EXISTS positions (
   vehicle_id text NOT NULL,
   trip_id text,
@@ -26,7 +26,8 @@ COPY positions(
   starttime,
   timestamp
 -- ) FROM '/tmp/vehicle_positions.csv' DELIMITER ',' CSV HEADER;
-) FROM  '/var/lib/postgresql/vehicle_positions.csv' DELIMITER ',' CSV HEADER;
+-- ) FROM  '/var/lib/postgresql/vehicle_positions.csv' DELIMITER ',' CSV HEADER;
+) FROM  '/var/lib/postgresql/vehicle_positions_with_linelocate.csv' DELIMITER ',' CSV HEADER;
 
 DELETE FROM positions a
 USING positions b

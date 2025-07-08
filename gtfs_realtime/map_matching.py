@@ -98,14 +98,15 @@ def projection(gdf, matched_gdf):
     def snap_point(row):
         try:
             if pd.isna(row['line_position']):
-                return None, None
+                # return None, None
+                return row["latitude"], row["longitude"]  # Fallback to original lat/lon
             snapped_point = row['geometry_line'].interpolate(row['line_position'], normalized=True)
             return snapped_point.y, snapped_point.x  # y=lat, x=lon
         except Exception:
             return None, None
 
     merged['line_position'] = merged.apply(linelocate, axis=1)
-    merged[['snapped_latitude', 'snapped_longitude']] = merged.apply(
+    merged[['latitude', 'longitude']] = merged.apply(
         lambda row: pd.Series(snap_point(row)), axis=1
     )
 
@@ -115,14 +116,11 @@ def projection(gdf, matched_gdf):
         "route_id",
         "latitude",
         "longitude",
-        "snapped_latitude",
-        "snapped_longitude",
         "bearing",
         "current_stop_sequence",
         "start_date", 
         "start_time", 
-        "timestamp",
-        "line_position"
+        "timestamp"
     ]
 
     merged[cols].to_csv("vehicle_positions_with_linelocate.csv", index=False)
@@ -147,8 +145,10 @@ def save_failed_as_geojson(failed_log, filename="map_matching_errors.geojson"):
     else:
         print("No failed points to save.")
 
+parquet_file = "modified-vehicle_positions_20250708_175459.parquet"
+
 if __name__ == "__main__":
-    df = pd.read_parquet("modified-vehicle_positions_20250630_224819.parquet")
+    df = pd.read_parquet(parquet_file)
 
     geometry = [Point(lon, lat) for lat, lon in zip(df['latitude'], df['longitude'])]
     gdf = gpd.GeoDataFrame(df, geometry=geometry)
@@ -167,4 +167,4 @@ if __name__ == "__main__":
         save_failed_as_geojson(failed_log)
         print(f"Failed map matching for {len(failed_log)} trips. Details saved to map_matching_errors.geojson")
 
-    # projection(gdf, matched_gdf)
+    projection(gdf, matched_gdf)
