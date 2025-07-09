@@ -118,6 +118,7 @@ def run_map_matching(gdf):
                     "route_id": route_id,
                     "latitude": lat,
                     "longitude": lon,
+                    "startdate": pd.to_datetime(time, unit='s').date().isoformat(),
                     "timestamp": time
                 })
             shapes.append({

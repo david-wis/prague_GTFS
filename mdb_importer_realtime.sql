@@ -7,10 +7,9 @@ CREATE TABLE IF NOT EXISTS positions (
   route_id text,
   latitude float NOT NULL,
   longitude float NOT NULL,
-  bearing float,
-  current_stop_sequence int,
+  -- bearing float,
+  -- current_stop_sequence int,
   startdate text,
-  starttime text,
   timestamp bigint NOT NULL
 );
 
@@ -20,14 +19,13 @@ COPY positions(
   route_id,
   latitude,
   longitude,
-  bearing,
-  current_stop_sequence,
+  -- bearing,
+  -- current_stop_sequence,
   startdate,
-  starttime,
   timestamp
 -- ) FROM '/tmp/vehicle_positions.csv' DELIMITER ',' CSV HEADER;
 -- ) FROM  '/var/lib/postgresql/vehicle_positions.csv' DELIMITER ',' CSV HEADER;
-) FROM  '/var/lib/postgresql/vehicle_positions_with_linelocate.csv' DELIMITER ',' CSV HEADER;
+) FROM  '/var/lib/postgresql/map_matched_positions.csv' DELIMITER ',' CSV HEADER;
 
 DELETE FROM positions a
 USING positions b
@@ -66,10 +64,9 @@ CREATE TABLE trips_mdbrt (
     trip_id text NOT NULL,
     vehicle_id text NOT NULL,
     startdate text,
-    starttime text,
-    starttimefull timestamp,
+    -- starttimefull timestamp,
     trip tgeompoint,
-    PRIMARY KEY (trip_id, vehicle_id, startdate, starttime)
+    PRIMARY KEY (trip_id, vehicle_id, startdate)
 );
 
 DO $$ BEGIN RAISE NOTICE '...Inserting trip_mdb'; END; $$;
@@ -78,16 +75,15 @@ INSERT INTO trips_mdbrt(
     trip_id,
     vehicle_id,
     startdate,
-    starttime,
     trip)
-SELECT trip_id, vehicle_id, startdate, starttime, tgeompointseq(array_agg(tgeompoint(point, to_timestamp(timestamp)) ORDER BY timestamp))
+SELECT trip_id, vehicle_id, startdate, tgeompointseq(array_agg(tgeompoint(point, to_timestamp(timestamp)) ORDER BY timestamp))
 FROM positions
 WHERE startdate IS NOT NULL
-GROUP BY trip_id, vehicle_id, starttime, startdate;
+GROUP BY trip_id, vehicle_id, startdate;
 
-UPDATE trips_mdbrt
-SET starttimefull = TO_TIMESTAMP(CONCAT(startdate, ' ',starttime),'YYYYMMDD HH24:MI:SS') 
-WHERE startdate != '' AND starttime < '24:00:00';
+-- UPDATE trips_mdbrt
+-- SET starttimefull = TO_TIMESTAMP(CONCAT(startdate, ' ',starttime),'YYYYMMDD HH24:MI:SS') 
+-- WHERE startdate != '' AND starttime < '24:00:00';
 
 DO $$ BEGIN RAISE NOTICE '...Updating trip_mdb'; END; $$;
 
