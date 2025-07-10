@@ -7,23 +7,42 @@ from shapely.geometry import LineString, Point
 from collections import defaultdict
 import tqdm
 import json
+from pyproj import Geod
+
+geod = Geod(ellps="WGS84")
 
 VALHALLA_URL = "http://localhost:8002/trace_route"
 # VALHALLA_URL = "http://localhost:8002/trace_attributes"
 # VALHALLA_URL = "https://valhalla1.openstreetmap.de/trace_route"
 
+def haversine_distance(lat1, lon1, lat2, lon2):
+    _, _, dist = geod.inv(lon1, lat1, lon2, lat2)
+    return dist  # en metros
+
+discarded_points = 0
+MAX_DISTANCE_BETWEEN_POINTS = 2000
+
 def prepare_trips(gdf):
+    global discarded_points
+
     gdf = gdf.sort_values(['vehicle_id', 'trip_id', 'timestamp'])
     gdf['epoch_seconds'] = gdf['timestamp'].astype('int64') // 10**9
     trip_points = defaultdict(list)
     for _, row in gdf.iterrows():
         key = (row['vehicle_id'], row['trip_id'], row['route_id'])
         prev = trip_points[key][-1] if trip_points[key] else None
-        if row['timestamp'] == prev['time'] if prev else None:
-            if (row['latitude'] == prev['lat'] and row['longitude'] == prev['lon']) if prev else False:
-                continue  # Skip duplicate points
-            else:
-                print("Inconsistency detected")
+        if prev:
+            if row['timestamp'] == prev['time'] if prev else None:
+                if (row['latitude'] == prev['lat'] and row['longitude'] == prev['lon']) if prev else False:
+                    continue  # Skip duplicate points
+                else:
+                    print("Inconsistency detected")
+
+            dist = haversine_distance(prev['lat'], prev['lon'], row['latitude'], row['longitude'])
+            if dist >= MAX_DISTANCE_BETWEEN_POINTS:
+                # print(f"Discarded point: too far ({dist:.2f} m) from previous for trip {key}")
+                discarded_points += 1
+                continue  # Skip points too far away
 
         point = {
             "lat": row['latitude'],
@@ -58,7 +77,7 @@ def map_match_trip(points, failed_log, vehicle_id=None, trip_id=None, route_id=N
         "format": "osrm",
         "trace_options": {
             "search_radius": 100,
-            "turn_penalty_factor": 500
+            # "turn_penalty_factor": 500
         }
         # "filters": {
         #     "action": "include",
@@ -131,8 +150,8 @@ def run_map_matching(gdf):
 
     traj_df = gpd.GeoDataFrame(traj_rows, crs="EPSG:4326")
     point_df = pd.DataFrame(point_rows)
-    shapes_df = gpd.GeoDataFrame(shapes, crs="EPSG:4326", geometry='geometry')
-    return traj_df, failed_log, point_df, shapes_df
+    shapes_gdf = gpd.GeoDataFrame(shapes, crs="EPSG:4326")
+    return traj_df, failed_log, point_df, shapes_gdf
 
 
 def save_failed_as_geojson(failed_log, filename="map_matching_errors.geojson"):
@@ -163,7 +182,7 @@ if __name__ == "__main__":
     geometry = [Point(lon, lat) for lat, lon in zip(df['latitude'], df['longitude'])]
     gdf = gpd.GeoDataFrame(df, geometry=geometry)
 
-    matched_gdf, failed_log, point_df, shapes_df = run_map_matching(gdf)
+    matched_gdf, failed_log, point_df, shapes_gdf = run_map_matching(gdf)
 
     # count distinct trips
     distinct_trips_len = matched_gdf['trip_id'].nunique()
@@ -178,4 +197,16 @@ if __name__ == "__main__":
         print(f"Failed map matching for {len(failed_log)} trips. Details saved to map_matching_errors.geojson")
 
     point_df.to_csv("map_matched_positions.csv", index=False)
-    shapes_df.to_file("map_matched_shapes.geojson", driver="GeoJSON")
+    shapes_gdf.to_file("map_matched_shapes.geojson", driver="GeoJSON")
+
+    # shapes_gdf.to_csv("map_matched_shapes.csv", index=False)
+    # convert to regular DataFrame for CSV
+    shapes_df = pd.DataFrame({
+        "vehicle_id": shapes_gdf["vehicle_id"],
+        "trip_id": shapes_gdf["trip_id"],
+        "route_id": shapes_gdf["route_id"],
+        "geometry": shapes_gdf["geometry"].apply(lambda geom: f"SRID=4326;{geom.wkt}")
+    })
+    shapes_df.to_csv("map_matched_shapes.csv", index=False)
+
+    print(f"Discarded {discarded_points} points during map matching due to distance threshold.")
