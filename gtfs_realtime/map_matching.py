@@ -26,7 +26,7 @@ def prepare_trips(gdf):
     global discarded_points
 
     gdf = gdf.sort_values(['vehicle_id', 'trip_id', 'timestamp'])
-    gdf['epoch_seconds'] = gdf['timestamp'].astype('int64') // 10**9
+    # gdf['epoch_seconds'] = gdf['timestamp'].astype('int64') // 10**9
     trip_points = defaultdict(list)
     for _, row in gdf.iterrows():
         key = (row['vehicle_id'], row['trip_id'], row['route_id'])
@@ -123,7 +123,7 @@ def run_map_matching(gdf):
     for (veh_id, trip_id, route_id), points in tqdm.tqdm(trip_points.items(), desc="Map matching"):
         matched, shape = map_match_trip(points, failed_log, vehicle_id=veh_id, trip_id=trip_id)
         if matched:
-            geom = LineString(matched)
+            geom = LineString([(lon, lat) for (lon, lat, _) in matched])
             traj_rows.append({
                 "vehicle_id": veh_id,
                 "trip_id": trip_id,
@@ -137,7 +137,7 @@ def run_map_matching(gdf):
                     "route_id": route_id,
                     "latitude": lat,
                     "longitude": lon,
-                    "startdate": pd.to_datetime(time, unit='s').date().isoformat(),
+                    "startdate": pd.to_datetime(time).date(),
                     "timestamp": time
                 })
             shapes.append({
@@ -174,7 +174,7 @@ def save_failed_as_geojson(failed_log, filename="map_matching_errors.geojson"):
     else:
         print("No failed points to save.")
 
-parquet_file = "modified-vehicle_positions_20250708_175459.parquet"
+parquet_file = "new_vehicle_positions_20250711_192540.parquet"
 
 if __name__ == "__main__":
     df = pd.read_parquet(parquet_file)
@@ -196,7 +196,10 @@ if __name__ == "__main__":
         save_failed_as_geojson(failed_log)
         print(f"Failed map matching for {len(failed_log)} trips. Details saved to map_matching_errors.geojson")
 
+    # remove all rows that are duplicated (not including timestamp)
+    point_df = point_df.drop_duplicates(subset=['vehicle_id', 'trip_id', 'route_id', 'latitude', 'longitude'])
     point_df.to_csv("map_matched_positions.csv", index=False)
+
     shapes_gdf.to_file("map_matched_shapes.geojson", driver="GeoJSON")
 
     # shapes_gdf.to_csv("map_matched_shapes.csv", index=False)
