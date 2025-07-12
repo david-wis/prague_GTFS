@@ -128,7 +128,7 @@ WHERE sp.fraction BETWEEN
 
 -- Calculate interpolated times for shape points
 DROP TABLE IF EXISTS interpolated_shape_points;
-CREATE TEMP TABLE interpolated_shape_points AS
+CREATE TABLE interpolated_shape_points AS
 SELECT 
     trip_id,
     route_id,
