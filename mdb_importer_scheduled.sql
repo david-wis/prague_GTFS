@@ -63,7 +63,7 @@ END;
 $$;
 
 -- Crear trip_segs
-DROP TABLE IF EXISTS trip_segs;
+DROP TABLE IF EXISTS trip_segs CASCADE;
 CREATE TABLE trip_segs (
   trip_id text,
   route_id text,
@@ -71,6 +71,8 @@ CREATE TABLE trip_segs (
   stop1_sequence integer,
   stop2_sequence integer,
   num_stops integer,
+  stop1_id text,
+  stop2_id text,
   shape_id text,
   stop1_arrival_time interval,
   stop2_arrival_time interval,
@@ -86,11 +88,13 @@ DO $$
 BEGIN
   RAISE NOTICE '...Inserting trip_segs';
   INSERT INTO trip_segs (trip_id, route_id, service_id, stop1_sequence, stop2_sequence,
-                         num_stops, shape_id, stop1_arrival_time, stop2_arrival_time, perc1, perc2)
+                         num_stops, stop1_id, stop2_id,
+                         shape_id, stop1_arrival_time, stop2_arrival_time, perc1, perc2)
   WITH temp AS (
     SELECT t.trip_id, t.route_id, t.service_id, t.stop_sequence,
            LEAD(stop_sequence) OVER w AS stop_sequence2,
            MAX(stop_sequence) OVER (PARTITION BY trip_id),
+           t.stop_id, LEAD(t.stop_id) OVER w,
            t.shape_id, t.arrival_time, LEAD(arrival_time) OVER w,
            t.perc, LEAD(perc) OVER w
     FROM trip_stops t
@@ -196,8 +200,10 @@ BEGIN
          date, point_geom, date + point_arrival_time AS t
   FROM trip_points t
   JOIN service_dates s ON t.service_id = s.service_id
-  -- WHERE date BETWEEN '2025-06-29' AND '2025-07-01'; -- For schedule analysis
-  WHERE date = '2025-07-08'; -- For real time analysis
+  -- Para analisis de scheduled
+  -- WHERE date = '2025-07-08';
+  -- Para analisis real time
+  WHERE date = '2025-07-11';
 END;
 $$;
 
