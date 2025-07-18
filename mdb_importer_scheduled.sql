@@ -1,27 +1,5 @@
 -- Inspired in: https://github.dev/pabloito/MDB-Importer
 
-DROP VIEW IF EXISTS service_dates;
-CREATE VIEW service_dates AS (
-	SELECT service_id, date_trunc('day', d)::date AS date
-	FROM calendar c, generate_series(start_date, end_date, '1 day'::interval) AS d
-	WHERE (
-		(monday = 'available' AND extract(isodow FROM d) = 1) OR
-		(tuesday = 'available' AND extract(isodow FROM d) = 2) OR
-		(wednesday = 'available' AND extract(isodow FROM d) = 3) OR
-		(thursday = 'available' AND extract(isodow FROM d) = 4) OR
-		(friday = 'available' AND extract(isodow FROM d) = 5) OR
-		(saturday = 'available' AND extract(isodow FROM d) = 6) OR
-		(sunday = 'available' AND extract(isodow FROM d) = 7)
-	)
-	EXCEPT
-	SELECT service_id, date
-	FROM calendar_dates WHERE exception_type = 'removed'
-	UNION
-	SELECT c.service_id, date
-	FROM calendar c JOIN calendar_dates d ON c.service_id = d.service_id
-	WHERE exception_type = 'added' AND start_date <= date AND date <= end_date
-);
-
 -- Crear trip_stops
 DROP TABLE IF EXISTS trip_stops;
 CREATE TABLE trip_stops (
@@ -200,15 +178,15 @@ BEGIN
          date, point_geom, date + point_arrival_time AS t
   FROM trip_points t
   JOIN service_dates s ON t.service_id = s.service_id
-  -- Para analisis de scheduled
-  -- WHERE date = '2025-07-08';
+  Para analisis de scheduled
+  WHERE date = '2025-07-08';
   -- Para analisis real time
-  WHERE date = '2025-07-11';
+  -- WHERE date = '2025-07-11';
 END;
 $$;
 
 
-DROP TABLE IF EXISTS trips_mdb;
+DROP TABLE IF EXISTS trips_mdb CASCADE;
 CREATE TABLE trips_mdb (
   trip_id text NOT NULL,
   route_id text NOT NULL,
