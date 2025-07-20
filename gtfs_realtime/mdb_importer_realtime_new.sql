@@ -29,7 +29,7 @@ COPY realtime_positions (
   startdate,
   timestamp
 ) 
-FROM '/var/lib/postgresql/map_matched_positions.csv' DELIMITER ',' CSV HEADER;
+FROM '/tmp/map_matched_positions.csv' DELIMITER ',' CSV HEADER;
 
 COPY realtime_shapes (
   vehicle_id,
@@ -37,7 +37,7 @@ COPY realtime_shapes (
   route_id,
   geometry
 )
-FROM '/var/lib/postgresql/map_matched_shapes.csv' DELIMITER ',' CSV HEADER;
+FROM '/tmp/map_matched_shapes.csv' DELIMITER ',' CSV HEADER;
 
 DROP TABLE IF EXISTS matched_points;
 CREATE TEMP TABLE matched_points AS

@@ -178,7 +178,7 @@ BEGIN
          date, point_geom, date + point_arrival_time AS t
   FROM trip_points t
   JOIN service_dates s ON t.service_id = s.service_id
-  Para analisis de scheduled
+--   Para analisis de scheduled
   WHERE date = '2025-07-08';
   -- Para analisis real time
   -- WHERE date = '2025-07-11';

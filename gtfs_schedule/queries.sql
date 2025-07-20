@@ -22,11 +22,11 @@ route_groups AS
 )
 SELECT name, qty, perc 
 FROM route_groups g JOIN route_types t ON g.route_type = t.route_type
-ORDER BY perc DESC
+ORDER BY perc DESC;
 
 
 -- Visualizar trips que entran y salen al poligono (multiline)
-DROP MATERIALIZED VIEW MultilineShapeTrips;
+DROP MATERIALIZED VIEW IF EXISTS MultilineShapeTrips;
 CREATE MATERIALIZED VIEW MultilineShapeTrips AS
 SELECT ROW_NUMBER() OVER () as id, trip_id, ST_GeometryType(ST_Intersection(traj, ST_Transform(geom, 5514))), ST_Difference(
 	  traj,
@@ -34,11 +34,11 @@ SELECT ROW_NUMBER() OVER () as id, trip_id, ST_GeometryType(ST_Intersection(traj
   )
   AS geom_part
   FROM trips_mdb, province
-  WHERE ST_Intersects(traj, ST_Transform(geom, 5514)) AND ST_GeometryType(ST_Intersection(traj, ST_Transform(geom, 5514))) = 'ST_MultiLineString'
+  WHERE ST_Intersects(traj, ST_Transform(geom, 5514)) AND ST_GeometryType(ST_Intersection(traj, ST_Transform(geom, 5514))) = 'ST_MultiLineString';
 
 
 -- Agregacion de rutas por segmento
-DROP MATERIALIZED VIEW SegmentsDisplay  IF EXISTS;
+DROP MATERIALIZED VIEW IF EXISTS SegmentsDisplay;
 CREATE MATERIALIZED VIEW SegmentsDisplay AS
 SELECT
     c.from_stop_id || c.to_stop_id as id,
@@ -144,29 +144,28 @@ CREATE TABLE shopping_trip_intervals (
 
 INSERT INTO shopping_trip_intervals (shopping_name, intervalo, trips_nearby)
 WITH instants AS (
-  SELECT 
-    s.name AS shopping_name,
-    t.trip_id,
-    getTimestamp(unnest(instants(t.trip))) AS instant_time
-  FROM shopping_malls s
-  JOIN trips_mdb t ON ST_DWithin(s.geom, t.traj, 200)
-), ranges AS (
-  SELECT 
-    shopping_name,
-    trip_id,
-    instant_time,
-    (EXTRACT(HOUR FROM instant_time)::int / 2) * 2 AS range_start
-  FROM instants
-  WHERE instant_time::date = '2025-06-30'
+    SELECT
+        s.name AS shopping_name,
+        t.trip_id,
+        getTimestamp(unnest(instants(t.trip))) AS instant_time
+    FROM shopping_malls s
+    JOIN trips_mdb t ON ST_DWithin(s.geom, t.traj, 200)
+),
+ranges AS (
+    SELECT
+        shopping_name,
+        trip_id,
+        instant_time,
+        (EXTRACT(HOUR FROM instant_time)::int / 2) * 2 AS range_start
+    FROM instants
 )
 SELECT
-  shopping_name,
-  lpad(range_start::text, 2, '0') || ':00–' || lpad((range_start+1)::text, 2, '0') || ':59' AS intervalo,
-  COUNT(DISTINCT trip_id) AS trips_nearby
+    shopping_name,
+    lpad(range_start::text, 2, '0') || ':00–' || lpad((range_start+1)::text, 2, '0') || ':59' AS intervalo,
+    COUNT(DISTINCT trip_id) AS trips_nearby
 FROM ranges
 GROUP BY shopping_name, range_start
 ORDER BY shopping_name, range_start;
-
 
 -- Calcular velocidades promedio de los segmentos
 DROP MATERIALIZED VIEW IF EXISTS schedule_speeds;
@@ -181,12 +180,12 @@ GROUP BY route_id, stop1_sequence, stop2_sequence, seg_geom;
 
 
 SELECT COUNT(*) FROM trip_segs
-WHERE stop2_arrival_time <> stop1_arrival_time
+WHERE stop2_arrival_time <> stop1_arrival_time;
 -- 1281030
 
 SELECT COUNT(*) FROM trip_segs
 WHERE seg_length / EXTRACT(EPOCH FROM (stop2_arrival_time - stop1_arrival_time)) * 3.6 < 30
-AND stop2_arrival_time <> stop1_arrival_time
+AND stop2_arrival_time <> stop1_arrival_time;
 -- 821914 (el 60% de los segmentos tiene una velocidad de 30km/h o menos)
 
 -- Calcular velocidades promedio de los segmentos mayores a 50km/h
@@ -198,7 +197,7 @@ SELECT
     seg_geom
 FROM trip_segs s
 JOIN routes USING (route_id)
-WHERE stop2_arrival_time <> stop1_arrival_timeAND route_type = '3'
+WHERE stop2_arrival_time <> stop1_arrival_time AND route_type = '3'
 GROUP BY route_id, stop1_sequence, stop2_sequence, seg_geom
 HAVING AVG(seg_length / EXTRACT(EPOCH FROM (stop2_arrival_time - stop1_arrival_time)) * 3.6) > 50;
 

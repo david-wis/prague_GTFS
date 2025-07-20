@@ -1,3 +1,7 @@
+ALTER TABLE realtime_positions ADD COLUMN geom geometry;
+UPDATE realtime_positions SET
+geom = ST_SetSRID(ST_MakePoint(Longitude, Latitude), 4326);
+
 -- Tiempos de demora por cada trip
 DROP TABLE IF EXISTS trip_stops_rt;
 CREATE TABLE trip_stops_rt AS
