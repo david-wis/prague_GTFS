@@ -128,6 +128,16 @@ A continuación se detallan los scripts principales del proyecto, su funcionalid
   python3 rest_gtfs_rt_inspector.py
   ```
 
+- **errors.py**\
+  Script para analizar los tipos de rutas fallidos en el proceso de map matching. 
+
+  **Ejecutar:**
+
+  ```sh
+  cd gtfs_realtime
+  python3 errors.py map_matching_errors.geojson
+  ```
+
 - **visualize.py**\
   Script deprecado. Se utilizaba cuando se trabajaba con la API basada en protobuf para la extracción de datos. Convierte el archivo Parquet original a uno nuevo, extrayendo únicamente los atributos necesarios y renombrando ciertos campos.
   **Nota:** Este script ya no se utiliza, ya que se ha migrado a un enfoque diferente para el procesamiento de datos.\
