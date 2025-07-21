@@ -204,3 +204,71 @@ HAVING AVG(seg_length / EXTRACT(EPOCH FROM (stop2_arrival_time - stop1_arrival_t
 -- Ver el ejemplo de Pod Lochkovem / Do Pražského okruhu
 SELECT * FROM trips_over_50kmh
 WHERE ST_Intersects(ST_Transform(seg_geom, 5514), ST_Buffer(ST_Point(-749498.6,-1051660.6, 5514), 10)) 
+
+-- Districts
+DROP MATERIALIZED VIEW avg_speed_by_district_0_6;
+CREATE MATERIALIZED VIEW avg_speed_by_district_0_6 AS
+SELECT
+  d.naz_sop AS district,
+  d.geom AS district_geom,
+  AVG(s.seg_length / EXTRACT(EPOCH FROM (s.stop2_arrival_time - s.stop1_arrival_time)) * 3.6) AS avg_speed_kmh
+FROM trip_segs s
+JOIN prague_districts d
+  ON ST_Intersects(s.seg_geom, d.geom)
+WHERE
+  s.stop2_arrival_time <> s.stop1_arrival_time
+  AND EXTRACT(HOUR FROM s.stop1_arrival_time) >= 0
+  AND EXTRACT(HOUR FROM s.stop1_arrival_time) < 6
+GROUP BY d.naz_sop, d.geom
+ORDER BY d.naz_sop;
+
+DROP MATERIALIZED VIEW IF EXISTS avg_speed_by_district_6_12;
+CREATE MATERIALIZED VIEW avg_speed_by_district_6_12 AS
+SELECT
+  d.naz_sop AS district,
+  d.geom AS district_geom,
+  AVG(s.seg_length / EXTRACT(EPOCH FROM (s.stop2_arrival_time - s.stop1_arrival_time)) * 3.6) AS avg_speed_kmh,
+  COUNT(*) AS segment_count
+FROM trip_segs s
+JOIN prague_districts d
+  ON ST_Intersects(s.seg_geom, d.geom)
+WHERE
+  s.stop2_arrival_time <> s.stop1_arrival_time
+  AND EXTRACT(HOUR FROM s.stop1_arrival_time) >= 6
+  AND EXTRACT(HOUR FROM s.stop1_arrival_time) < 12
+GROUP BY d.naz_sop, d.geom
+ORDER BY d.naz_sop;
+
+DROP MATERIALIZED VIEW IF EXISTS avg_speed_by_district_12_18;
+CREATE MATERIALIZED VIEW avg_speed_by_district_12_18 AS
+SELECT
+  d.naz_sop AS district,
+  d.geom AS district_geom,
+  AVG(s.seg_length / EXTRACT(EPOCH FROM (s.stop2_arrival_time - s.stop1_arrival_time)) * 3.6) AS avg_speed_kmh,
+  COUNT(*) AS segment_count
+FROM trip_segs s
+JOIN prague_districts d
+  ON ST_Intersects(s.seg_geom, d.geom)
+WHERE
+  s.stop2_arrival_time <> s.stop1_arrival_time
+  AND EXTRACT(HOUR FROM s.stop1_arrival_time) >= 12
+  AND EXTRACT(HOUR FROM s.stop1_arrival_time) < 18
+GROUP BY d.naz_sop, d.geom
+ORDER BY d.naz_sop;
+
+DROP MATERIALIZED VIEW IF EXISTS avg_speed_by_district_18_24;
+CREATE MATERIALIZED VIEW avg_speed_by_district_18_24 AS
+SELECT
+  d.naz_sop AS district,
+  d.geom AS district_geom,
+  AVG(s.seg_length / EXTRACT(EPOCH FROM (s.stop2_arrival_time - s.stop1_arrival_time)) * 3.6) AS avg_speed_kmh,
+  COUNT(*) AS segment_count
+FROM trip_segs s
+JOIN prague_districts d
+  ON ST_Intersects(s.seg_geom, d.geom)
+WHERE
+  s.stop2_arrival_time <> s.stop1_arrival_time
+  AND EXTRACT(HOUR FROM s.stop1_arrival_time) >= 18
+  AND EXTRACT(HOUR FROM s.stop1_arrival_time) < 24
+GROUP BY d.naz_sop, d.geom
+ORDER BY d.naz_sop;

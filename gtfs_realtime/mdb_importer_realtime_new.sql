@@ -9,8 +9,10 @@ CREATE TABLE realtime_positions (
   latitude float,
   longitude float,
   startdate date,
+  point_geom geometry(Point, 4326),
   timestamp timestamptz
 );
+
 
 DROP TABLE IF EXISTS realtime_shapes;
 CREATE TABLE realtime_shapes (
@@ -31,6 +33,9 @@ COPY realtime_positions (
 ) 
 FROM '/tmp/map_matched_positions.csv' DELIMITER ',' CSV HEADER;
 
+UPDATE realtime_positions
+SET point_geom = ST_SetSRID(ST_MakePoint(longitude, latitude), 4326);
+
 COPY realtime_shapes (
   vehicle_id,
   trip_id,
@@ -46,7 +51,7 @@ SELECT
     rp.route_id,
     rp.vehicle_id,
     rp.startdate,
-    ST_SetSRID(ST_MakePoint(rp.longitude, rp.latitude), 4326) AS point_geom,
+    rp.point_geom,
     rp.timestamp,
     ST_LineLocatePoint(rs.geometry, ST_SetSRID(ST_MakePoint(rp.longitude, rp.latitude), 4326)) AS fraction
 FROM realtime_positions rp
