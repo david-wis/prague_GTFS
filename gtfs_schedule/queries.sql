@@ -206,7 +206,7 @@ SELECT * FROM trips_over_50kmh
 WHERE ST_Intersects(ST_Transform(seg_geom, 5514), ST_Buffer(ST_Point(-749498.6,-1051660.6, 5514), 10)) 
 
 -- Districts
-DROP MATERIALIZED VIEW avg_speed_by_district_0_6;
+DROP MATERIALIZED VIEW IF EXISTS avg_speed_by_district_0_6;
 CREATE MATERIALIZED VIEW avg_speed_by_district_0_6 AS
 SELECT
   d.naz_sop AS district,

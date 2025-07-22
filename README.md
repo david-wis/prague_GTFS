@@ -69,6 +69,8 @@ docker run -dt --name valhalla_gis-ops -p 8002:8002 \
 |   |-- mdb_importer_realtime_new.sql
 |   |-- queries.sql
 |   |-- requirements.txt
+|   |-- speed_comparison.py
+|   |-- errors.py
 |   |-- rest_gtfs_rt_inspector.py
 |   `-- visualize.py
 `-- gtfs_schedule
@@ -99,13 +101,15 @@ A continuación se detallan los scripts principales del proyecto, su funcionalid
 
 - **gtfs\_rt\_inspector.py**\
   Versión alternativa del extractor de datos en realtime, pero utilizando la API basada en protobuf de GTFS-RT. Permite inspeccionar y procesar el feed en tiempo real, generando un archivo Parquet con las posiciones de los vehículos.
+  Recibe como parámetros la URL de la API y el tiempo máximo de captura en segundos.
   Nota: Es necesario preprocesar el archivo resultante con la función convert_parquet de visualize.py.
   No se recomienda su uso, ya que la calidad de los datos obtenidos por este método es significativamente inferior.
+
   **Ejecutar:**
 
   ```sh
   cd gtfs_realtime
-  python3 gtfs_rt_inspector.py
+  python3 gtfs_rt_inspector.py api.golemio.cz vehicle_positions 300
   ```
 
 - **map\_matching.py**\
@@ -125,7 +129,7 @@ A continuación se detallan los scripts principales del proyecto, su funcionalid
 
   ```sh
   cd gtfs_realtime
-  python3 rest_gtfs_rt_inspector.py
+  python3 rest_gtfs_rt_inspector.py <api_key> <tiempo_maximo_en_segundos>
   ```
 
 - **errors.py**\
@@ -141,6 +145,7 @@ A continuación se detallan los scripts principales del proyecto, su funcionalid
 - **visualize.py**\
   Script deprecado. Se utilizaba cuando se trabajaba con la API basada en protobuf para la extracción de datos. Convierte el archivo Parquet original a uno nuevo, extrayendo únicamente los atributos necesarios y renombrando ciertos campos.
   **Nota:** Este script ya no se utiliza, ya que se ha migrado a un enfoque diferente para el procesamiento de datos.\
+
   **Ejecutar:**
 
   ```sh
@@ -150,6 +155,7 @@ A continuación se detallan los scripts principales del proyecto, su funcionalid
 
 - **speed_comparison.py**\
   Analiza la distribución de segmentos de la red de transporte público según sus diferencias de velocidad, agrupándolos en intervalos fijos de 10 km/h
+
   **Ejecutar:**
 
   ```sh
@@ -163,6 +169,7 @@ A continuación se detallan los scripts principales del proyecto, su funcionalid
 
 - **agg\_routes\_per\_segment.py**\
   Genera un histograma que muestra la cantidad de rutas que circulan por cada segmento de la red.
+
   **Ejecutar:**
 
   ```sh
@@ -172,6 +179,7 @@ A continuación se detallan los scripts principales del proyecto, su funcionalid
 
 - **trips\_near\_shopping.py**\
   Genera un gráfico que muestra la cantidad de trips cercanos a cada shopping en intervalos de 2 horas.
+
   **Ejecutar:**
 
   ```sh
@@ -198,12 +206,6 @@ Recuerda posicionarte en la carpeta correspondiente antes de ejecutar cada archi
 - **queries.sql**  
   Contiene consultas auxiliares y de análisis sobre los datos de tiempo real ya importados.
 
-  **Ejecutar:**
-  ```sh
-  cd gtfs_realtime
-  psql -h localhost -U postgres -p 25432 -d prague -f queries.sql
-  ```
-
 ---
 
 ### En `gtfs_schedule/`:
@@ -219,9 +221,3 @@ Recuerda posicionarte en la carpeta correspondiente antes de ejecutar cada archi
 
 - **queries.sql**  
   Contiene consultas auxiliares y de análisis sobre los datos programados ya importados.
-
-  **Ejecutar:**
-  ```sh
-  cd gtfs_schedule
-  psql -h localhost -U postgres -p 25432 -d prague -f queries.sql
-  ```
