@@ -10,3 +10,4 @@ psycopg_binary
 geopandas
 polyline
 tqdm
+matplotlib

@@ -148,6 +148,15 @@ A continuación se detallan los scripts principales del proyecto, su funcionalid
   python3 visualize.py 
   ```
 
+- **speed_comparison.py**\
+  Analiza la distribución de segmentos de la red de transporte público según sus diferencias de velocidad, agrupándolos en intervalos fijos de 10 km/h
+  **Ejecutar:**
+
+  ```sh
+  cd gtfs_realtime
+  python3 speed_comparison.py
+  ```
+
 ---
 
 ### En `gtfs_schedule/`:
