@@ -138,34 +138,34 @@ ORDER BY distance_km;
 DROP TABLE IF EXISTS shopping_trip_intervals;
 CREATE TABLE shopping_trip_intervals (
     shopping_name TEXT,
-    intervalo TEXT,
+    interv TEXT,
     trips_nearby INTEGER
 );
 
-INSERT INTO shopping_trip_intervals (shopping_name, intervalo, trips_nearby)
+INSERT INTO shopping_trip_intervals (shopping_name, interv, trips_nearby)
 WITH instants AS (
-    SELECT
-        s.name AS shopping_name,
-        t.trip_id,
-        getTimestamp(unnest(instants(t.trip))) AS instant_time
-    FROM shopping_malls s
-    JOIN trips_mdb t ON ST_DWithin(s.geom, t.traj, 200)
-),
-ranges AS (
-    SELECT
-        shopping_name,
-        trip_id,
-        instant_time,
-        (EXTRACT(HOUR FROM instant_time)::int / 2) * 2 AS range_start
-    FROM instants
+  SELECT 
+    s.name AS shopping_name,
+    t.trip_id,
+    getTimestamp(unnest(instants(t.trip))) AS instant_time
+  FROM shopping_malls s
+  JOIN trips_mdb t ON ST_DWithin(s.geom, t.traj, 200)
+), ranges AS (
+  SELECT 
+    shopping_name,
+    trip_id,
+    instant_time,
+    (EXTRACT(HOUR FROM instant_time)::int / 2) * 2 AS range_start
+  FROM instants
 )
 SELECT
-    shopping_name,
-    lpad(range_start::text, 2, '0') || ':00–' || lpad((range_start+1)::text, 2, '0') || ':59' AS intervalo,
-    COUNT(DISTINCT trip_id) AS trips_nearby
+  shopping_name,
+  lpad(range_start::text, 2, '0') || ':00–' || lpad((range_start+1)::text, 2, '0') || ':59' AS interv,
+  COUNT(DISTINCT trip_id) AS trips_nearby
 FROM ranges
 GROUP BY shopping_name, range_start
 ORDER BY shopping_name, range_start;
+
 
 -- Calcular velocidades promedio de los segmentos
 DROP MATERIALIZED VIEW IF EXISTS schedule_speeds;

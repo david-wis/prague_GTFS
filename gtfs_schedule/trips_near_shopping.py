@@ -10,11 +10,11 @@ DB_PASS = ""
 
 # 1. Query que une trips y distancia de cada shopping
 query = """
-SELECT sti.shopping_name, sti.intervalo, sti.trips_nearby, tcs.distance_km
+SELECT sti.shopping_name, sti.interv, sti.trips_nearby, tcs.distance_km
 FROM shopping_trip_intervals sti
 JOIN trajectories_center_shopping tcs
   ON sti.shopping_name = tcs.name
-ORDER BY sti.intervalo, sti.shopping_name;
+ORDER BY sti.interv, sti.shopping_name;
 """
 
 
@@ -28,7 +28,7 @@ def fetch_shopping_trips():
     cur.close()
     conn.close()
     df = pd.DataFrame(
-        data, columns=["shopping_name", "intervalo", "trips_nearby", "distance_km"]
+        data, columns=["shopping_name", "interv", "trips_nearby", "distance_km"]
     )
     return df
 
@@ -49,7 +49,7 @@ def plot_shopping_trips(df):
     color_dict = dict(zip(avg_distance["shopping_name"], colors))
 
     pivot = df.pivot(
-        index="intervalo", columns="shopping_name", values="trips_nearby"
+        index="interv", columns="shopping_name", values="trips_nearby"
     ).fillna(0)
 
     plt.figure(figsize=(12, 7))
